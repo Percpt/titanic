@@ -5,13 +5,24 @@
 #  Kaggle Titanic Tutorial Part 4: Feature Engineering
 #  Kaggle Titanic Tutorial Part 5: Random Forests
 
+
+
 # Setup data set ----------------------------------------------------------
 setwd('~/Desktop/titanic/')
 train <- read.csv("~/Desktop/titanic/train.csv") # Import training data
 test <- read.csv("~/Desktop/titanic/test.csv")   # Import test data
 
 
-# Check out the dataframe structure
+# Part 1: Starting w/ R ---------------------------------------------------
+#
+# Functions learned:
+#     View
+#     str
+#     table
+#     prop.table(table(...))
+#     summary
+
+# Checking out the dataframe structure
 View(train) # Preview the dataset 
 str(train)
 
@@ -84,11 +95,16 @@ write.csv(submit, file = "jfaMostFemalesSurvive.csv", row.names = FALSE)
 View(submit)
 
 
+# Part 3: Decision Trees --------------------------------------------------
+# Functions:
+#   rpart         - Recursive partitioning & Regression Trees package
+#     rpart
+#   rattle        - plotting decision trees
+#     fancyRpartPlot
+#   rpart.plot    - plotting decision trees
+#   RColorBrewer  - plotting decision trees
 
-# Decision Tree Algorithm -------------------------------------------------
-
-
-# Setup data set ----------------------------------------------------------
+# Setup data set 
 setwd('~/Desktop/titanic/')
 train <- read.csv("~/Desktop/titanic/train.csv") # Import training dataset
 test <- read.csv("~/Desktop/titanic/test.csv")   # Import test dataset
@@ -148,7 +164,6 @@ fancyRpartPlot(fit)
 Prediction <- predict(fit, test, type = "class")
 submit     <- data.frame(PassengerId = test$PassengerId, Survived = Prediction)
 write.csv(submit, file = "jfaDtreePlay.csv", row.names = FALSE)
-
 
 
 # Part 4: Feature Engineering Section ---------------------------------------------
@@ -215,6 +230,8 @@ Prediction <- predict(fit, test, type = "class")
 submit     <- data.frame(PassengerId = test$PassengerId, Survived = Prediction)
 write.csv(submit, file="jfaFeatureEngineeredPredictions.csv", row.names=FALSE)
 
+
+# Part 5: Random Forests --------------------------------------------------
 
 
 
