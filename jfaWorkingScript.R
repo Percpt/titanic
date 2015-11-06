@@ -233,9 +233,88 @@ write.csv(submit, file="jfaFeatureEngineeredPredictions.csv", row.names=FALSE)
 
 # Part 5: Random Forests --------------------------------------------------
 
+# Bagging: Bootstrap aggregating: randomized samples of observations
+#  w/ replacement
+sample(1:10, replace=TRUE)
+
+
+# RANDOM FOREST RESTRICTION 1: NA values
+# Need to clean out missing values (ie NAs)
+
+summary(combi$Age)
+Agefit <- rpart(Age ~ Pclass + Sex + SibSp + Parch
+                + Fare + Embarked + Title + FamilySize,
+                data = combi[!is.na(combi$Age),], method="anova")
+combi$Age[is.na(combi$Age)] <- predict(Agefit, combi[is.na(combi$Age),])
+
+fancyRpartPlot(Agefit) # Predicting age based on features
+
+
+# Scrube EMBARKED variable
+# Since there are only 2 blank ('') values we just replace it with the most 
+# popular embark location --Southampton (ie. "S")
+combi$Embarked[which(combi$Embarked == '')] = "S"
+combi$Embarked <- factor(combi$Embarked)
+
+# Scrub FARE variable NA
+# Since there is only one NA, we just replace it with the median fare
+combi$Fare[which(is.na(combi$Fare))]  <- median(combi$Fare, na.rm=TRUE)
+
+
+# RANDON FOREST RESTRICTION 2: Max 32 levels
+# Random forests in R can only process factors with up to 32 levels
+# FAMILYID needs to cut down on the number of levels from 61 levels
+
+# 2 options
+#   1) Change the levels to underlying integers (via UNCLASS()) and have the
+#   tree treat FAMILYID as a continuous variable
+#   2) Manually reduce the number of levels
+
+# Manual level reduction by increasing the "small" family cutoff from 2 to 3 
+combi$FamilyID2 <- combi$FamilyID
+combi$FamilyID2 <- as.character(combi$FamilyID2)
+combi$FamilyID2[combi$FamilySize <= 3] <- 'Small'
+combi$FamilyID2 <- factor(combi$FamilyID2)
+
+# 
+install.packages('randomForest')
+library(randomForest)
+
+
+# set random seed to ensure results are reproducible next time I use the code
+set.seed(415)
+
+
+train  <- combi[1:891,]
+test <- combi[892:1309,]
+fit <- randomForest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + 
+                      Fare + Embarked + Title + FamilySize + FamilyID2, 
+                    data = train,
+                    importance = TRUE, 
+                    ntree = 2000)
+
+varImpPlot(fit)
+
+Prediction <- predict(fit, test)
+submit <- data.frame(PassengerId = test$PassengerId, Survived = Prediction)
+write.csv(submit, file = "jfaFirstForest.csv", row.names = FALSE)
 
 
 
+# Conditional Inference Trees
+# Condition Inference Trees are able to handle factors with more levels than Random Forests case. So we can use the original FamilyID variable. 
+install.packages('party')
+library(party)
+set.seed(415)
+fit <- cforest(as.factor(Survived) ~ Pclass + Sex + Age + SibSp + Parch + Fare 
+               + Embarked + Title + FamilySize + FamilyID,
+               data = train,
+               controls = cforest_unbiased(ntree = 2000, mtry = 3))
+
+Prediction <- predict(fit, test, OOB=TRUE, type="response")
+submit <- data.frame(PassengerId = test$PassengerId, Survived = Prediction)
+write.csv(submit, file = "jfaModel-FirstConditionalInferenceTree.csv"
+          , row.names=FALSE)
 
 # Notes -------------------------------------------------------------------
 # VARIABLE DESCRIPTIONS:
